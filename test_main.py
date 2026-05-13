@@ -4,8 +4,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine,async_sessionmaker
 
 
-from main import app, get_db
-from database import Base
+from main import app
+from database import Base,get_db
 
 
 # Create test database
