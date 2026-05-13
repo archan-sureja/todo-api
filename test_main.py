@@ -1,47 +1,47 @@
-import pytest
+from jinja2.nodes import Test
+import pytest_asyncio
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.ext.asyncio import create_async_engine,async_sessionmaker
+
 
 from main import app, get_db
 from database import Base
 
 
 # Create test database
-SQLALCHEMY_DATABASE_URL = "sqlite://"
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite://"
 
-engine = create_engine(
+engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
 )
 
-TestingSessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
+TestingSessionLocal = async_sessionmaker(
     bind=engine,
+    expire_on_commit=False
 )
 
 
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
+async def override_get_db():
+    async with TestingSessionLocal() as db:
         yield db
-    finally:
-        db.close()
 
 
-Base.metadata.create_all(bind=engine)
+
 app.dependency_overrides[get_db] = override_get_db
 
 
-@pytest.fixture
-def client():
-    """Provide test client"""
-    Base.metadata.create_all(bind=engine)
-    yield TestClient(app)
-    Base.metadata.drop_all(bind=engine)
+@pytest_asyncio.fixture
+async def client():
+
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    with TestClient(app) as test_client:
+        yield test_client
+
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.drop_all)
 
 
 class TestTodoEndpoints:
