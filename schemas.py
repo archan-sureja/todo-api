@@ -1,5 +1,4 @@
 from pydantic import BaseModel , Field , ConfigDict
-from pydantic.types import Enum
 from pydantic.types import datetime
 
 
@@ -27,7 +26,7 @@ class TaskCreate(BaseModel):
 
 class TaskUpdate(BaseModel):
     text : str | None = None 
-    completed : bool | None = None 
+    completed : bool  = False 
     
 class TodoCreateUpdate(BaseModel):
     title : str = Field(min_length=1,max_length=100) 
