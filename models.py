@@ -13,13 +13,13 @@ class Task(Base):
         default=lambda: datetime.now(timezone.utc)
     )
     todo_id : Mapped[int] = mapped_column(Integer,ForeignKey("todos.id"))
-    todo : Mapped["Todo"] = relationship("Todo",back_populates="tasks")
+    todo : Mapped["Todo"] = relationship("Todo",back_populates="tasks",lazy="joined")
 
 class Todo(Base):
     __tablename__ = "todos"
     id : Mapped[int] = mapped_column(Integer,primary_key=True,index=True)
     title : Mapped[str] = mapped_column(String,nullable=False)
-    tasks : Mapped[list["Task"]] = relationship("Task",back_populates="todo")
+    tasks : Mapped[list["Task"]] = relationship("Task",back_populates="todo",lazy="selectin")
     created_at : Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc)
